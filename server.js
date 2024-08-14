@@ -6,12 +6,13 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const cookieparser = require('cookie-parser');
 const multer = require('multer');
+const port=process.env.port || 5500;
 // const upload =multer({dest:'upload/'})
 
 const app = express();
 app.use(cors({
   origin: "http://localhost:2000",
-  methods: ["get", "post" ,"put","delete"],
+  methods: ["get", "post" ,"put","DELETE"],
   credentials: true
 }));
 app.use(express.json());
@@ -20,11 +21,11 @@ app.use('/upload', express.static(path.join(__dirname, 'upload')));
 const salt = 10;
 
 const db = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: 'root123',
-  database: 'e_com',
-  port: '3300'
+  host: 'by8pf5yg2qnqqqc55fxp-mysql.services.clever-cloud.com',
+  user: 'uvmuppek9hdyfgnh',
+  password: 'Ma5utd5ah7mHfxvNgpMP',
+  database: 'by8pf5yg2qnqqqc55fxp',
+  port: '3306'
 });
 
 const storage = multer.diskStorage({
@@ -48,7 +49,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/product", (req, res) => {
-  const q = "SELECT * FROM e_com.products";
+  const q = "SELECT * FROM products";
   db.query(q, (err, data) => {
     if (err) return res.json(err);
     return res.json(data);
@@ -120,8 +121,6 @@ app.post("/user", (req, res) => {
             email: data[0].email
           };
           const token = jwt.sign({ user }, "jwt_secret_key", { expiresIn: "1h" });
-
-          res.cookie('username', 'Krishnan', { maxAge: 3600000, httpOnly: true });
           return res.json({ message: "Authentication success", user,token });
         } else {
           return res.status(401).json({ message: "Password incorrect" });
@@ -133,7 +132,26 @@ app.post("/user", (req, res) => {
   });
 });
 
+const verifyAuth = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
 
+  if (!token) return res.status(401).json({ message:   
+ 'Unauthorized: No token provided' });
+
+  try {
+    const decoded = jwt.verify(token,   
+ 'jwt_secret_key');
+    req.user = decoded.user; // Attach user data to the request object
+    next();
+  } catch (err) {
+    res.status(403).json({ message: 'Unauthorized: Invalid token' });
+  }
+};
+
+app.get('/checkauth', verifyAuth, (req, res) => {
+  res.json(req.user);
+});
     
 
 
@@ -159,7 +177,7 @@ app.post("/register", (req, res) => {
 });
 
 app.get("/review",(req,res)=>{
-  const q = "select * from e_com.review"
+  const q = "select * from review"
 
   db.query(q,(err,data)=>{
     if(err) res.json(err);
@@ -173,7 +191,7 @@ app.get("/clientreview", (req, res) => {
       return res.status(400).json({ error: "User ID is required" });
   }
 
-  const q = "SELECT * FROM e_com.review WHERE user_id = ? AND approval = true";
+  const q = "SELECT * FROM review WHERE user_id = ? AND approval = true";
   const values = [userId];
 
   db.query(q, values, (err, data) => {
@@ -218,7 +236,7 @@ app.put("/review", (req, res) => {
 
 
 app.get("/cart", (req, res) => {
-  const q = "SELECT * FROM e_com.cart WHERE user_id = ?";
+  const q = "SELECT * FROM cart WHERE user_id = ?";
   const values = [req.query.user_id];
   db.query(q, values, (err, data) => {
     if (err) return res.json(err);
@@ -345,7 +363,7 @@ app.get("/order",(req,res)=>{
     })
 
 
-app.listen(5500, () => {
+app.listen(port, () => {
   console.log("server is connected with port 5500");
 });
 
