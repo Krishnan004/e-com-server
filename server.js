@@ -11,7 +11,7 @@ const port=process.env.port || 5500;
 
 const app = express();
 app.use(cors({
-  origin:["https://e-panel.netlify.app/","https://e-commerce-dev-web.netlify.app/","http://localhost:2000/","http://localhost:5173/"],
+  origin:["https://e-panel.netlify.app","https://e-commerce-dev-web.netlify.app","http://localhost:2000","http://localhost:5173"],
   methods: ["get","post","put","DELETE"],
   credentials: true
 }));
