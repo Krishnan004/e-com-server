@@ -10,9 +10,15 @@ const port=process.env.port || 5500;
 // const upload =multer({dest:'upload/'})
 
 const app = express();
+// main e-com website seprate domain and admin-panel in defferent domain
 app.use(cors({
-  origin:["https://e-panel.netlify.app","https://e-commerce-dev-web.netlify.app","http://localhost:2000","http://localhost:5173"],
-  methods: ["get","post","put","DELETE"],
+  origin: [
+    "https://e-panel.netlify.app", 
+    "https://e-commerce-dev-web.netlify.app", 
+    "http://localhost:2000", 
+    "http://localhost:5173"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE"],  // Make sure PUT is here
   credentials: true
 }));
 app.use(express.json());
@@ -20,6 +26,8 @@ app.use(cookieparser());
 app.use('/upload', express.static(path.join(__dirname, 'upload')));
 const salt = 10;
 
+
+// used CleverCloud for mysql hosting
 const db = mysql.createConnection({
   host: 'by8pf5yg2qnqqqc55fxp-mysql.services.clever-cloud.com',
   user: 'uvmuppek9hdyfgnh',
@@ -47,6 +55,7 @@ const upload = multer({
 app.get("/", (req, res) => {
   return res.json("frontend connected");
 });
+
 
 app.get("/product", (req, res) => {
   const q = "SELECT * FROM products";
