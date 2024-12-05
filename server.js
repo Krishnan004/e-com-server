@@ -1,11 +1,12 @@
 const express = require('express');
-const mysql = require('mysql');
 const cors = require('cors');
 const path = require('path');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const cookieparser = require('cookie-parser');
-const multer = require('multer');
+const db = require('./databade/db_config')
+const upload = require('./storage/imgStorage');
+require('dotenv').config()
 const port=process.env.port || 5500;
 // const upload =multer({dest:'upload/'})
 
@@ -18,38 +19,15 @@ app.use(cors({
     "http://localhost:2000", 
     "http://localhost:5173"
   ],
-  methods: ["GET", "POST", "PUT", "DELETE"],  // Make sure PUT is here
+  methods: ["GET", "POST", "PUT", "DELETE"],  
   credentials: true
 }));
+
 app.use(express.json());
 app.use(cookieparser());
 app.use('/upload', express.static(path.join(__dirname, 'upload')));
 const salt = 10;
 
-
-// used CleverCloud for mysql hosting
-const db = mysql.createConnection({
-  host: 'by8pf5yg2qnqqqc55fxp-mysql.services.clever-cloud.com',
-  user: 'uvmuppek9hdyfgnh',
-  password: 'Ma5utd5ah7mHfxvNgpMP',
-  database: 'by8pf5yg2qnqqqc55fxp',
-  port: '3306'
-});
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, './upload');
-  },
-  filename: function (req, file, cb) {
-    const filename = Date.now() + '-' + file.originalname;
-    cb(null, filename);
-  }
-});
-
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
-});
 
 
 app.get("/", (req, res) => {
@@ -57,57 +35,61 @@ app.get("/", (req, res) => {
 });
 
 
-app.get("/product", (req, res) => {
-  const q = "SELECT * FROM products";
-  db.query(q, (err, data) => {
-    if (err) return res.json(err);
-    return res.json(data);
-  });
-});
+const productRouter = require('./product')
 
-app.post("/product", upload.single('file'), (req, res) => {
-  if (!req.file) {
-    return res.status(500).json({ error: "File upload is required." });
-  }
-  const q = "INSERT INTO products (name,design,price,stock,category,description,product_src) VALUES (?,?,?,?,?,?,?)";
-  const values = [
-    req.body.name,
-    req.body.design,
-    req.body.price,
-    req.body.stock,
-    req.body.category,
-    req.body.description,
-    req.file.filename // Corrected to req.file.filename
-  ];
-  db.query(q, values, (err, data) => { 
-    if (err) return res.json(err);
-    return res.json(data);
-  });
-});
+app.use("/product",productRouter)
+
+// app.get("/product", (req, res) => {
+//   const q = "SELECT * FROM products";
+//   db.query(q, (err, data) => {
+//     if (err) return res.json(err);
+//     return res.json(data);
+//   });
+// });
+
+// app.post("/product", upload.single('file'), (req, res) => {
+//   if (!req.file) {
+//     return res.status(500).json({ error: "File upload is required." });
+//   }
+//   const q = "INSERT INTO products (name,design,price,stock,category,description,product_src) VALUES (?,?,?,?,?,?,?)";
+//   const values = [
+//     req.body.name,
+//     req.body.design,
+//     req.body.price,
+//     req.body.stock,
+//     req.body.category,
+//     req.body.description,
+//     req.file.filename // Corrected to req.file.filename
+//   ];
+//   db.query(q, values, (err, data) => { 
+//     if (err) return res.json(err);
+//     return res.json(data);
+//   });
+// });
 
 
-app.put("/product", upload.single('file'), (req, res) => {
-  const {
-    name,
-    design,
-    price,
-    stock,
-    category,
-    description,
-    product_id,
-    product_src
-  } = req.body;
+// app.put("/product", upload.single('file'), (req, res) => {
+//   const {
+//     name,
+//     design,
+//     price,
+//     stock,
+//     category,
+//     description,
+//     product_id,
+//     product_src
+//   } = req.body;
 
-  const filename = req.file ? req.file.filename : product_src;
+//   const filename = req.file ? req.file.filename : product_src;
 
-  const values = [name, design, price, stock, category, description, filename, product_id];
-  const q = "UPDATE products SET name = ?, design = ?, price = ?, stock = ?, category = ?, description = ?, product_src = ? WHERE product_id = ?";
+//   const values = [name, design, price, stock, category, description, filename, product_id];
+//   const q = "UPDATE products SET name = ?, design = ?, price = ?, stock = ?, category = ?, description = ?, product_src = ? WHERE product_id = ?";
   
-  db.query(q, values, (err, data) => {
-    if (err) return res.status(500).json({ error: err.message });
-    return res.status(200).json({ message: "Product updated successfully", data });
-  });
-});
+//   db.query(q, values, (err, data) => {
+//     if (err) return res.status(500).json({ error: err.message });
+//     return res.status(200).json({ message: "Product updated successfully", data });
+//   });
+// });
 
 
 
