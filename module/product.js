@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
-const upload = require('./storage/imgStorage');
-const db = require('./databade/db_config')
+const upload = require('../storage/imgStorage');
+const db = require('../databade/db_config')
 
 
 
